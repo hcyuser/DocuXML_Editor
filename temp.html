@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <base href="http://docusky.digital.ntu.edu.tw/docusky/"/>
+   <script src="js/jquery.min.js"></script>
+   <script src="js/jquery-ui.min.js"></script>
+   <script src="js.ui/docusky.ui.getDbCorpusDocumentsSimpleUI.js"></script>
+</head>
+<body>
+   <button id="getDocuSkyDocs">點我取得文件內容</button>
+   <div id="divContent">
+   </div>
+</body>
+<script>
+
+function displayDocList() {      // a callback function to display document list in JSON format
+   var s = JSON.stringify(docuSkyObj.docList);
+   var t = "<textarea style='width:100%; height:400px'>" + s + "</textarea>";
+   $("#divContent").html(t);
+}
+
+var docuSkyObj = null;           // global variable for accessing widget
+
+$(window).ready(function() {
+   docuSkyObj = docuskyGetDbCorpusDocumentsSimpleUI;
+   $("#getDocuSkyDocs").click(function(e) {
+      var param = {};
+      docuSkyObj.getQueryResultDocuments(param, e, displayDocList);
+   });
+});
+
+</script>
+</html>
