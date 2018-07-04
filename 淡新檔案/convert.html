@@ -1,0 +1,295 @@
+<!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <script src="../js/jquery.min.js"></script>
+   <script src="../js/FileSaver.min.js"></script>      <!-- 儲存檔案 -->
+   <style type="text/css">
+      body { margin: 0; font-family: Arial, Verdana, Microsoft JhengHei; line-height:150%; }
+      div.headerBar { background-color:brown; color:white; padding:8px; text-align: center; }
+      a.topAnchor:visited, a.topAnchor:link { color:#EFEFEF; cursor:pointer; }
+      div.contentArea { padding: 12px; }
+      div.outputArea { padding: 12px; }
+      table.fileInfo { width:100%; border-collapse: separate; border:2px solid gray; border-radius:3px; border-spacing: 2px; padding: 3px; }
+      tr.fileInfo:nth-child(even) { background: #EFEFEF; color:black; }
+      tr.fileInfo:nth-child(odd)  { background: #CFCFCF; color:black; }
+      tr.fileInfo:nth-child(1)    { background: #7F7F7F; color:white; }
+      td.fileInfo { padding: 3px;  vertical-align:top; }
+      span.fileDataItemTitle { margin-left:5px }
+      span.button { padding:6px; background-color:green; color:white;
+                    border-radius:4px; box-shadow: 3px 3px 2px #CFCFCF; cursor:pointer; }
+      doc_content{
+        background-color: #DDDDDD;
+        display: block;
+        margin-top: 20px;
+        margin-bottom: 20px;
+
+      }
+      Paragraph{
+        display: block;
+      }
+      LocName{
+          color: red;
+      }
+      PersonName{
+          color: blue;
+      }
+
+
+
+   </style>
+</head>
+<body>
+   <div id="headerBar" class="headerBar">
+      <table class="headerBar" width="100%">
+      <tr><td width="180" style="font-size:110%" align="left"><b>DocuSky</b><span style='font-size:60%;vertical-align:sub'>BETA</span></td>
+          <td><span style="font-size:105%">此工具可用來轉移 XML 建庫檔的 metadata 欄位，並且可設定欄位的顯示標題</td></td>
+          <td align="right"><a class="topAnchor" href="../../index.html">首頁</a> | <a class="topAnchor" href="../../userMainPage.php">我的資料庫</a></td>
+      </tr>
+      </table>
+   </div>
+   <div class="contentArea">
+      <table>
+         <tr><td valign='top'><nobr>簡要說明：</nobr></td>
+             <td>此工具可讀入一份 ThdlExportXml 檔，讓使用者指定要將哪些 metadata 欄位的值複製到其他欄位，然後輸出另一份 ThdlExportXml 檔。</td>
+         </tr>
+      </table>
+      <br/>
+      <b>步驟1. 讀入 ThdlExportXml 檔案:</b>
+      <ul style="line-height:180%">
+      <li>選擇檔案：<input id="selectInFile" type="file" autocomplete="off" accept=".xml"/></li>
+      </ul>
+      <button onclick="$('#xmlMetadataFields').toggle()">&#x25B6;</button> 已載入檔案： <span id="loadedFileBrief"></span><br/>
+      <br/>
+
+      <div class="outputArea">
+        <div >
+          <img id="showpic" style="width:700px;">
+        </div>
+        <b>步驟3. 輸出 ThdlExportXml 檔案:</b>
+        <ul style="line-height:180%">
+        <li>欲儲存的建庫檔名：<input type="text" id="outXmlFilename" value="NewExportFilename.xml" size="45" autocomplete="off"></input>
+            <button id="saveThdlExportXmlToFile">點我儲存</button></li>
+        </ul>
+      </div>
+  </div>
+</body>
+<script type="text/javascript">
+   const UNCHANGE_STR = '(保持不變)';
+   const DELETE_STR = '(刪除此標籤)';
+   var docuSkyObj = null;
+   var MyXmlList = {};
+   var fileDocuments;
+   var currentDoc = 0;
+  // MyXmlList[xmlFilename] = { text(string), docsInfo(object) }
+   var ThdlMetadataFields = { 'corpus'             : { pcTitle: '-', description: '文獻集名稱' },
+                              'compilation'        : { pcTitle: 'COMP', description: '文件出處' },
+                              'compilation_name'   : { pcTitle: 'COMP', description: '文件出處（另有冊數時使用）' },
+                              'compilation_vol'    : { pcTitle: '-', description: '文件出處第幾冊（整數）' },
+                              //'compilation_order': { pcTitle: '-', description: '文件出處的排列順序（欄位值必須為整數）'},
+                              'title'              : { pcTitle: '-', description: '文件標題' },
+                              'author'             : { pcTitle: 'AU', description: '文件作者' },
+                              'topic'              : { pcTitle: 'TP', description: '文件主題' },
+                              'geo'                : { pcTitle: 'GEO', description: '文件地域' },
+                              'geo_longitude'      : { pcTitle: '-', description: '文件經度 (-180.00~180.00)' },
+                              'geo_latitude'       : { pcTitle: '-', description: '文件緯度 (-90.00~90.00)' },
+                              'docclass'           : { pcTitle: 'CLASS', description: '文件類別' },
+                              'docclass_aux'       : { pcTitle: '-', description: '文件子類別' },
+                              'doc_category_l1'    : { pcTitle: 'CAT1', description: '文件分類（最上層分類）' },
+                              'doc_category_l2'    : { pcTitle: 'CAT2', description: '文件分類（第二層分類）' },
+                              'doc_category_l3'    : { pcTitle: 'CAT3', description: '文件分類（最三層分類）' },
+                              'cue_category'       : { pcTitle: 'CAT', description: '文件分類 (doc_category_l1/doc_category_l2/doc_category_l3)'},
+                              'doctype'            : { pcTitle: 'TYPE', description: '文件型態' },
+                              'doctype_aux'        : { pcTitle: '-', description: '文件子型態' },
+                              'doc_genre'          : { pcTitle: 'GENRE', description: '文件類型' },
+                              'book_code'          : { pcTitle: 'BC', description: '文件書碼' },
+                              'time_orig_str'      : { pcTitle: '-', description: '文件的時間資訊（字串）' },
+                              'time_varchar'       : { pcTitle: 'AD_YMD', description: '文件時間的西元日期（yyyymmdd）' },
+                              'time_norm_year'     : { pcTitle: '-', description: '文件時間的中曆年' },
+                              'era'                : { pcTitle: 'ERA', description: '文件時間的帝號' },
+                              //'era_order'        : { pcTitle: '-', description: '文件時間的帝號順序' },
+                              'time_norm_kmark'    : { pcTitle: '-', description: '文件時間的年號' },
+                              'year_for_grouping'  : { pcTitle: 'ADY', description: '文件時間的西元年份（常用於後分類）' },
+                              'time_dynasty'       : { pcTitle: 'DYN', description: '文件時間的朝代' },
+                              'timeseq_not_before' : { pcTitle: 'TNB', description: '文件「在某日期之後」的時間(可為 yyyymmdd 或任一整數)' },
+                              'timeseq_not_after'  : { pcTitle: 'TNA', description: '文件「在某日期之前」的時間(可為 yyyymmdd 或任一整數)' },
+                              'timeseq_number'     : { pcTitle: '-', description: '文件的時間(可為 yyyymmdd 或任一整數)' },
+                              //'doc_seq_number'   : { pcTitle: '-', description: '文件的顯示順序（必須為整數 -- 尚未實作）' },
+                              'doc_code'           : { pcTitle: '-', description: '文件的編碼（例如索書號或任意編碼）' },
+                              'doc_source'         : { pcTitle: 'SRC', description: '文件的來源' }
+                            };
+
+
+   // valid XML 1.0 characters: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+   // XML 1.1: Char ::= [#x1-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] /* any Unicode character, excluding the surrogate blocks, FFFE, and FFFF. */
+   //          RestrictedChar ::= [#x1-#x8] | [#xB-#xC] | [#xE-#x1F] | [#x7F-#x84] | [#x86-#x9F]
+   // Characters need to be escaped: <&>'"
+   // var object = $.extend({}, object1, object2);
+   // $('<div>').append(xmlObj).html()
+
+   function htmlAttrEscapeJsonStr(s) {
+      return s.replace(/\"/g, "&#x22;").replace(/\'/g, "&#x27;");
+   }
+
+   function htmlAttrUnescapeJsonStr(s) {
+      return s.replace(/&#x22;/g, '"').replace(/&#x27;/g, "'");
+   }
+
+   function htmlEncode(value) {
+     // create a in-memory div, set it's inner text, and then grab the encoded contents back out.
+     // this div never exists on the page.
+     return $('<div/>').text(value).html();
+   }
+
+   function htmlDecode(value) {
+     return $('<div/>').html(value).text();
+   }
+
+   $(document).ready(function() {
+      // register actions
+      $("#inputNewCorpus").click(function() {
+         if ($("#inputNewCorpus").prop("checked")) $("#spanNewCorpus").show();
+         else {
+            $("#newCorpusVal").val("");
+            $("#spanNewCorpus").hide();
+         }
+      });
+   });
+
+
+
+
+
+   function parseXmlStr(s, xmlFilename) {
+     var xmltemplate = `<?xml version="1.0"?>
+      <ThdlPrototypeExport>
+      <corpus name="淡新檔案">
+      <feature_analysis>
+        <spotlight category="Udef_Media" sub_category="-" display_order="1" title="媒體"/>
+        <spotlight category="Udef_image" sub_category="-" display_order="2" title="圖片"/>
+        <spotlight category="Udef_pdf" sub_category="-" display_order="3" title="PDF"/>
+        <tag type="contentTagging" name="Udef_Media" default_category="Udef_Media" default_sub_category="-"/>
+        <tag type="contentTagging" name="Udef_image" default_category="Udef_image" default_sub_category="-"/>
+        <tag type="contentTagging" name="Udef_pdf" default_category="Udef_pdf" default_sub_category="-"/>
+      </feature_analysis>
+      </corpus>
+      <documents>
+      FORREPLACE
+      </documents>
+      </ThdlPrototypeExport>`;
+      var newDoc = $("<document>");
+      var docs = $($.parseXML(s)).find("document");
+      var TagReplacTable =`主要題名	title
+主要作者/發文者及職稱/身分	author
+內容主題	topic
+地點	geo`;
+      newDoc.append("<doc_content>"+docs.find(`field[name="內容摘要"]`).text().trim()+
+      "\r\n"+docs.find(`field[name="備註"]`).text().trim()+"</doc_content>");
+      newDoc.append("\r\n");
+      var filename = docs.find(`field[name="檔案名稱"]`).text().trim();
+    TagReplacTable.split("\n").forEach(function(item,index){
+          let fn = docs.find(`field[name="${item.split('\t')[0]}"]`)[0];
+        //  fn.outerHTML=`<${item.split('\t')[1]}>${fn.textContent}</${item.split('\t')[1]}>`;
+          newDoc.append(`<${item.split('\t')[1]}>${fn.textContent}</${item.split('\t')[1]}>`);
+          newDoc.append("\r\n");
+
+    });
+
+    newDoc.attr("filename",filename+".xml");
+    var firstimage=false;
+    docs.find("file").children().each(
+      function(index){
+        let $0 = this;
+        if($0.nodeName=="image" && firstimage==false){
+          newDoc.append($.parseXML("<Udef_Media>"+
+          `http://dtrap.lib.ntu.edu.tw/DTRAP/image_for_docusky?docid=${filename}&amp;filename=${$0.textContent}`+
+          "</Udef_Media>").documentElement);
+          $("#showpic").attr("src",`http://dtrap.lib.ntu.edu.tw/DTRAP/image_for_docusky?docid=${filename}&filename=${$0.textContent}`);
+          newDoc.append("\r\n");
+          firstimage = true;
+        }
+        newDoc.append($.parseXML("<Udef_"+$0.nodeName.toLowerCase()+">"+$0.textContent+"</Udef_"+$0.nodeName.toLowerCase()+">").documentElement);
+        newDoc.append("\r\n");
+      }
+    );
+    var AncientTime = docs.find(`field[name="成文日期"]`).text().trim();
+    if(!AncientTime){
+          newDoc.append($.parseXML("<time_orig_str>不詳</time_orig_str>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<time_varchar>不詳</time_varchar>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<time_norm_year>不詳</time_norm_year>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<time_norm_kmark>不詳</time_norm_kmark>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<year_for_grouping>不詳</year_for_grouping>").documentElement);
+          newDoc.append("\r\n");
+    }else{
+          let SpecificTime = AncientTime.match(/[0-9]{1,4}/g);
+          let kmark = AncientTime.split(/[0-9]{1,4}/g)[0];
+          newDoc.append($.parseXML("<time_orig_str>"+kmark+SpecificTime[0]+"年</time_orig_str>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<time_varchar>"+SpecificTime[3]+
+                                  ("0000"+SpecificTime[1]).slice(-2)+
+                                  ("0000"+SpecificTime[2]).slice(-2)+
+                                  "</time_varchar>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<time_norm_year>清"+kmark+SpecificTime[0]+"年</time_norm_year>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<time_norm_kmark>"+kmark+"</time_norm_kmark>").documentElement);
+          newDoc.append("\r\n");
+          newDoc.append($.parseXML("<year_for_grouping>"+("0000"+SpecificTime[3]).slice(-4)+"</year_for_grouping>").documentElement);
+          newDoc.append("\r\n");
+    }
+
+
+
+      MyXmlList[xmlFilename] = xmltemplate.replace("FORREPLACE",newDoc[0].outerHTML);    // store to global variable
+
+
+
+   }
+
+   function readFileAndParseXml(file, evt) {
+      var xmlFilename = file.name;
+      var fr = new FileReader();
+      fr.addEventListener('load', function(evt) {
+         if (typeof MyXmlList[xmlFilename] !== "undefined") {
+            alert("File '" + xmlFilename + "' has been loaded");
+            return;
+         }
+         var s = evt.target.result;
+         parseXmlStr(s, xmlFilename);      // 2017-05-15
+      });
+      fr.readAsText(file, 'utf-8');
+   }
+
+
+   function handleSelectInFile(evt) {
+      //var outXmlFilename = $("#outXmlFilename").val().replace(/^(.+)\.xml$/, "$1" + ".xml");
+      //$("#outXmlFilename").val(outXmlFilename)
+
+      // 先簡單剖析檔案中有哪些資料（輸出時，需再剖析一次，取出欲輸出的資訊）
+      var files = evt.target.files;           // FileList object
+      for (var i=0; i<files.length; i++) {    // read selected files
+         var inFilename = files[i].name;
+         var outXmlFilename = inFilename.replace(/^(.+)\.xml$/, "M-" + "$1" + ".xml");
+         $("#outXmlFilename").val(outXmlFilename)
+         readFileAndParseXml(files[i], evt);  // store result to global variable MyXmlList
+      }
+   }
+
+   $("#selectInFile").bind('change', function(evt) {
+      //resetXmlMetadataInfo();
+      handleSelectInFile(evt);
+   });
+
+
+   $("#saveThdlExportXmlToFile").click(function() {
+       var out = MyXmlList[Object.keys(MyXmlList)[0]];
+       var blob = new Blob([out], {type: "text/plain;charset=utf-8"});
+       saveAs(blob, outXmlFilename.value);
+   });
+
+</script>
+</html>
