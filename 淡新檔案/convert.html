@@ -18,6 +18,14 @@
       span.fileDataItemTitle { margin-left:5px }
       span.button { padding:6px; background-color:green; color:white;
                     border-radius:4px; box-shadow: 3px 3px 2px #CFCFCF; cursor:pointer; }
+
+      eachdocument {
+        background-color: #DDDDDD;
+        display: block;
+        margin-top: 20px;
+        margin-bottom: 20px;
+
+      }
       doc_content{
         background-color: #DDDDDD;
         display: block;
@@ -43,7 +51,7 @@
    <div id="headerBar" class="headerBar">
       <table class="headerBar" width="100%">
       <tr><td width="180" style="font-size:110%" align="left"><b>DocuSky</b><span style='font-size:60%;vertical-align:sub'>BETA</span></td>
-          <td><span style="font-size:105%">此工具可用來轉移 XML 建庫檔的 metadata 欄位，並且可設定欄位的顯示標題</td></td>
+          <td><span style="font-size:105%">此工具可用來轉移 淡水新檔案Xml 的 metadata 欄位，並且可設定內文的人名 地名標注。</td></td>
           <td align="right"><a class="topAnchor" href="../../index.html">首頁</a> | <a class="topAnchor" href="../../userMainPage.php">我的資料庫</a></td>
       </tr>
       </table>
@@ -51,28 +59,36 @@
    <div class="contentArea">
       <table>
          <tr><td valign='top'><nobr>簡要說明：</nobr></td>
-             <td>此工具可讀入一份 ThdlExportXml 檔，讓使用者指定要將哪些 metadata 欄位的值複製到其他欄位，然後輸出另一份 ThdlExportXml 檔。</td>
+             <td>此工具可讀入一份 淡水新檔案Xml 檔，，然後輸出另一份 ThdlExportXml 檔。</td>
          </tr>
       </table>
       <br/>
-      <b>步驟1. 讀入 ThdlExportXml 檔案:</b>
+      <b>步驟1. 讀入 淡水新檔案Xml 檔案:</b>
       <ul style="line-height:180%">
       <li>選擇檔案：<input id="selectInFile" type="file" autocomplete="off" accept=".xml"/></li>
       </ul>
-      <button onclick="$('#xmlMetadataFields').toggle()">&#x25B6;</button> 已載入檔案： <span id="loadedFileBrief"></span><br/>
-      <br/>
-
+    </div>
+      <div class="contentArea">
+         <b>步驟2. 修改 ThdlExportXml 內容:</b>
+         <div >
+           <img id="showpic" style="width:700px;">
+         </div>
+         <div id="eachdocument" onmouseup="TagPopup()">如果你看到這一欄位，表示你尚未讀取XML。</div>
+         <button id="DocSave" onclick="saveDoc()">點我儲存</button>
+         <div id="PopupBox" style="display:none;">
+           <button onclick="TagText(this.innerHTML)">UnTag</button>
+           <button onclick="TagText(this.innerHTML)">LocName</button>
+           <button onclick="TagText(this.innerHTML)">PersonName</button>
+         </div>
+      </div>
       <div class="outputArea">
-        <div >
-          <img id="showpic" style="width:700px;">
-        </div>
         <b>步驟3. 輸出 ThdlExportXml 檔案:</b>
         <ul style="line-height:180%">
         <li>欲儲存的建庫檔名：<input type="text" id="outXmlFilename" value="NewExportFilename.xml" size="45" autocomplete="off"></input>
             <button id="saveThdlExportXmlToFile">點我儲存</button></li>
         </ul>
       </div>
-  </div>
+
 </body>
 <script type="text/javascript">
    const UNCHANGE_STR = '(保持不變)';
@@ -245,9 +261,61 @@
 
 
       MyXmlList[xmlFilename] = xmltemplate.replace("FORREPLACE",newDoc[0].outerHTML);    // store to global variable
+      var jqXmlDoc = $.parseXML(MyXmlList[xmlFilename]);            // returns XMLDocument
+      var jqXml = $(jqXmlDoc);
+      var jqDocumentNodes = jqXml.find("ThdlPrototypeExport > documents > document > doc_content ");
+      fileDocuments = jqDocumentNodes.length;
+      $("#eachdocument").empty();
+      for(var i=0;i<fileDocuments;i++){
+        var xmlstr = (new XMLSerializer()).serializeToString(jqDocumentNodes[i]);
+        //console.log(xmlstr);
+        $('#eachdocument').append(xmlstr);
+       }
 
 
 
+
+
+   }
+
+   function saveDoc(){
+      //save
+      for (var xmlFilename in MyXmlList){
+        var jqXmlDoc = $.parseXML(MyXmlList[xmlFilename]);
+        var doc = $(jqXmlDoc).find("ThdlPrototypeExport > documents > document ");
+        var editarea = $("#eachdocument").find("doc_content");
+        //console.log(editarea.html());
+        doc.find("doc_content").html(editarea.html());
+        MyXmlList[xmlFilename] = new XMLSerializer().serializeToString(jqXmlDoc);
+
+
+      }
+
+
+   }
+   function TagText(tagname){
+       var r = window.getSelection().getRangeAt(0);
+       var s = r.extractContents();
+       //console.log(s.textContent);
+      if(tagname=="UnTag"){
+        r.insertNode(document.createTextNode(s.textContent));
+
+      }else{
+            var newObj = $("<"+tagname+">").append(s.textContent);
+            if(tagname.toUpperCase().startsWith("UDEF_")){
+                newObj.css("color", "yellow");
+            }
+            r.insertNode(newObj[0]);
+      }
+
+   }
+   function TagPopup(){
+     var r = window.getSelection().getRangeAt(0);
+     if(!r.toString()){
+        $("#PopupBox").hide();
+     }else{
+        $("#PopupBox").show();
+     }
    }
 
    function readFileAndParseXml(file, evt) {
