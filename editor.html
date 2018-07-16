@@ -34,6 +34,9 @@
       PersonName{
           color: blue;
       }
+      udefforcolor{
+          color: yellow;
+      }
 
 
 
@@ -107,15 +110,50 @@
        </div>
    </div>
    <div class="contentArea">
+      <b>步驟1-1. 新增 SpecificTerm :</b>
+      <br>
+      編號：
+      <input type="text" id="SpecificTermID"  size="20">
+      &nbsp;標籤: <i>請以Udef_為開頭</i>
+      <input type="text" id="SpecificTermTag"  size="20">
+      &nbsp;  標題:
+      <input type="text" id="SpecificTermTitle"  size="20">
+      &nbsp;<button onclick="AddSpecificTerm()">新增</button>
+
+   </div>
+   <div class="contentArea">
       <b>步驟2. 修改 ThdlExportXml 內容:</b>
       <div id="eachdocument" onmouseup="TagPopup()">如果你看到這一欄位，表示你尚未讀取XML。</div>
-      <button id="DocPre" onclick="PreDoc()">上一個</button>
-      <button id="DocSaveANDNext" onclick="saveAndNextDoc()">點我儲存&下一個</button>
+      <button id="DocPre" onclick="PreDoc()" class="button">上一個</button>
+      <button id="DocSaveANDNext" onclick="saveAndNextDoc()"  class="button">點我儲存&下一個</button>
+      <br>
+      跳到第：
+      <input type="text" id="NumJumpSpecificDoc"  size="5"> 篇章
+      <button onclick="JumpSpecificDoc()"  class="button">執行</button>
       <div id="PopupBox" style="display:none;">
         <button onclick="TagText(this.innerHTML)">UnTag</button>
-        <button onclick="TagText(this.innerHTML)">LocName</button>
+        <button onclick="TagText(this.innerHTML)" >LocName</button>
         <button onclick="TagText(this.innerHTML)">PersonName</button>
         <span id="InnerPopupBox"></span>
+        <div>
+            <button onclick="SearchOutside(this.innerHTML)">CBDB</button>
+            <button onclick="SearchOutside(this.innerHTML)" >TWGIS</button>
+            <button onclick="SearchOutside(this.innerHTML)">TGAZ</button>
+        </div>
+      </div>
+   </div>
+
+   <div class="contentArea">
+      <button onclick="$('#2-1AdvanceTagging').toggle()">&#x25B6;</button>步驟2-1. 搜尋與一鍵標記</b>
+      <div id="2-1AdvanceTagging">
+        <br>
+        Term：
+        <input type="text" id="AdvanceTagTerm"  size="20">
+        &nbsp;標籤: <i>請輸入LocName or PersonName or Udef_XXX</i>
+        <input type="text" id="AdvanceTag"  size="20">
+        &nbsp;  RefId:
+        <input type="text" id="AdvanceTagRefId"  size="20">
+        &nbsp;<button onclick="AddAdvanceTag()">新增</button>
       </div>
    </div>
 
@@ -212,6 +250,8 @@
             $("#spanNewCorpus").hide();
          }
       });
+
+      $("#2-1AdvanceTagging").hide();
    });
 
    function resetXmlMetadataInfo() {
@@ -224,12 +264,7 @@
    }
 
    function PreDoc(){
-      if(currentDoc<fileDocuments){
-          $("#doc_"+currentDoc).hide();
-          currentDoc--;
-        $("#doc_"+currentDoc).show();
-
-      }
+      JumpSpecificDoc(--currentDoc);
 
    }
    function saveAndNextDoc(){
@@ -240,31 +275,61 @@
         var jqXmlDoc = $.parseXML(MyXmlList[xmlFilename].text);
         var temp = $(jqXmlDoc).find("ThdlPrototypeExport > documents ");
         var doc = $("#doc_"+currentDoc).find("document");
+
         /*doc.find("*").each(
           function(index){
             if(this.textContent.trim()==""||this.textContent.trim()=="\"\"")
           }
         ); */
-        temp.find("document").eq(currentDoc).html(doc.html());
+        //console.log(doc[0].outerHTML);
+        let afterreg = doc[0].outerHTML.replace(/<udefforcolor>/g,"").replace(/<\/udefforcolor>/g,"");
+        temp.find("document").eq(currentDoc).replaceWith($.parseXML(afterreg).documentElement);
         //console.log(MyXmlList[xmlFilename]);
         //$(jqXmlDoc).find("ThdlPrototypeExport > documents > document").text(temp.html());
         MyXmlList[xmlFilename] = { text:  new XMLSerializer().serializeToString(jqXmlDoc) , docsInfo: docsInfo };
 
 
       }
-      $("#doc_0").hide();
-      if(currentDoc<fileDocuments){
-          $("#doc_"+currentDoc).hide();
-          currentDoc++;
-          var jqdc = $("#doc_"+currentDoc).find("doc_content").find("*");
+
+
+        /*  var jqdc = $("#doc_"+currentDoc).find("doc_content").find("*");
             jqdc.each(function(index){
               if(this.nodeName.startsWith("UDEF_")){
                 $(this).css("color", "yellow");
                 //console.log(index,jqDD.length);
             }
-          });
-        $("#doc_"+currentDoc).show();
+          });*/
+        JumpSpecificDoc(++currentDoc);
+
+
+   }
+   function JumpSpecificDoc(page){
+
+
+
+      $("#eachdocument").children().hide();
+      if(page!=null){
+        currentDoc = page;
+      }else{
+        currentDoc = $("#NumJumpSpecificDoc").val()*1;
       }
+
+      if(0>currentDoc){
+        currentDoc=0;
+      }else if(currentDoc>fileDocuments-1){
+
+         currentDoc = fileDocuments-1;
+
+      }
+
+       //console.log(currentDoc);
+      let afterreg = $("#doc_"+currentDoc).html().replace(/<Udef_.*?>/g,(ii)=>("<udefforcolor>"+ii) )
+                                                 .replace(/<\/Udef_.*?>/g, (ii)=>(ii+"</udefforcolor>"));
+
+
+      $("#doc_"+currentDoc).html($.parseXML(afterreg).documentElement);
+      $("#doc_"+currentDoc).show();
+
 
    }
    function TagPopup(){
@@ -286,11 +351,6 @@
 
      }
 
-
-
-
-
-
    }
    function TagText(tagname){
        var r = window.getSelection().getRangeAt(0);
@@ -300,12 +360,104 @@
         r.insertNode(document.createTextNode(s.textContent));
 
       }else{
-            var newObj = $("<"+tagname+">").append(s.textContent);
+            var newObj;
             if(tagname.toUpperCase().startsWith("UDEF_")){
-                newObj.css("color", "yellow");
+              newObj = $.parseXML(`<${tagname}><udefforcolor>${s.textContent}</udefforcolor></${tagname}>`);
+            }else{
+              let userinput = prompt("Please input RefId: ");
+              if(userinput){
+                  newObj = $.parseXML(`<${tagname} RefId="${userinput}" Term="${userinput}" >${s.textContent}</${tagname}> `);
+
+              }else{
+                    newObj = $.parseXML(`<${tagname}>${s.textContent}</${tagname}> `);
+              }
+
             }
-            r.insertNode(newObj[0]);
+
+            r.insertNode(newObj.documentElement);
       }
+
+   }
+
+   function AddSpecificTerm(){
+
+           for (var xmlFilename in MyXmlList) {
+
+             var docsInfo = MyXmlList[xmlFilename].docsInfo;
+             var jqXmlDoc = $.parseXML(MyXmlList[xmlFilename].text);
+             var TP = $(jqXmlDoc).find("ThdlPrototypeExport > corpus ");
+             var FA = $(jqXmlDoc).find("ThdlPrototypeExport > corpus > feature_analysis ");
+             //var newObj = $("<"+tagname+">").append(s.textContent);
+             var NewID = $("#SpecificTermID").val();
+             var NewTag = $("#SpecificTermTag").val();
+             var NewTitle = $("#SpecificTermTitle").val();
+             var  temp= FA.html()+ '<spotlight category="'+NewTag+'" sub_category="-" '+' display_order="'+NewID+'" title="'+NewTitle+'" />';
+             temp = temp + '<tag type="contentTagging" name="'+NewTag+'" default_category="'+NewTag+'" default_sub_category="-"/>';
+            // alert(temp);
+             TP.find("feature_analysis").html(temp);
+             //console.log(MyXmlList[xmlFilename]);
+
+             //$(jqXmlDoc).find("ThdlPrototypeExport > documents > document").text(temp.html());
+             MyXmlList[xmlFilename] = { text:  new XMLSerializer().serializeToString(jqXmlDoc) , docsInfo: docsInfo };
+
+
+
+              //var s = replaceXmlData(MyXmlList[xmlFilename]);    // 會用到頁面上的資訊來進行取代，因此不能先把頁面資訊清除...
+              resetXmlMetadataInfo();                            // 計算後才能清除頁面資訊
+              parseXmlStr(MyXmlList[xmlFilename].text, xmlFilename);
+           }
+
+
+
+   }
+
+
+   function AddAdvanceTag(){
+     var AdvanceTagTerm  = $("#AdvanceTagTerm").val();
+     var AdvanceTag  = $("#AdvanceTag").val();
+     var AdvanceTagRefId  = $("#AdvanceTagRefId").val();
+     for (var xmlFilename in MyXmlList){
+       docsInfo = MyXmlList[xmlFilename].docsInfo;
+       var jqXmlDoc = $.parseXML(MyXmlList[xmlFilename].text);
+       var temp = $(jqXmlDoc).find("ThdlPrototypeExport > documents ");
+       var BeforeModify = temp[0].outerHTML;
+       //console.log(BeforeModify.length);
+       if(AdvanceTagRefId){
+
+           BeforeModify = BeforeModify.replace(new RegExp(AdvanceTagTerm,"g"),`<${AdvanceTag} RefID="${AdvanceTagRefId}" Term="${AdvanceTagRefId}">${AdvanceTagTerm}</${AdvanceTag}>`);
+
+
+       }else{
+           BeforeModify = BeforeModify.replace(new RegExp(AdvanceTagTerm,"g"),`<${AdvanceTag}>${AdvanceTagTerm}</${AdvanceTag}>`);
+       }
+
+       temp.replaceWith($.parseXML(BeforeModify).documentElement);
+
+       MyXmlList[xmlFilename] = { text:  new XMLSerializer().serializeToString(jqXmlDoc) , docsInfo: docsInfo };
+       resetXmlMetadataInfo();
+       parseXmlStr(MyXmlList[xmlFilename].text, xmlFilename);
+
+
+     }
+
+
+
+   }
+
+   function SearchOutside(searchgoal){
+        if(searchgoal=="CBDB"){
+              window.open('https://cbdb.fas.harvard.edu/cbdbapi/person.php?name='+window.getSelection().toString());
+
+        }
+        if(searchgoal=="TWGIS"){
+              window.open('http://docusky.digital.ntu.edu.tw/DocuSky/docutools/geocode/map.html?n='+window.getSelection().toString());
+
+        }
+        if(searchgoal=="TGAZ"){
+              window.open('https://maps.cga.harvard.edu/tgaz/placename?n='+window.getSelection().toString());
+
+        }
+
 
    }
 
@@ -332,7 +484,7 @@
       for(var i=0;i<fileDocuments;i++){
 
           var xmlstr = (new XMLSerializer()).serializeToString(jqDocumentNodes[i]);
-          var str4div = "<div id="+"\"doc_"+i+"\""+" class=\"showDoc\">";
+          var str4div = "<div id="+"\"doc_"+i+"\""+" class=\"showDoc \">";
           $('#eachdocument').append(str4div+xmlstr+"</div>");
           $("#doc_"+i).hide();
        }
