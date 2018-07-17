@@ -322,9 +322,9 @@
 
       }
 
-       //console.log(currentDoc);
-      let afterreg = $("#doc_"+currentDoc).html().replace(/<Udef_.*?>/g,(ii)=>("<udefforcolor>"+ii) )
-                                                 .replace(/<\/Udef_.*?>/g, (ii)=>(ii+"</udefforcolor>"));
+
+      let afterreg = $("#doc_"+currentDoc).html().replace(/<udef_.*?>/g,(ii)=>("<udefforcolor>"+ii) )
+                                                 .replace(/<\/udef_.*?>/g, (ii)=>(ii+"</udefforcolor>"));
 
 
       $("#doc_"+currentDoc).html($.parseXML(afterreg).documentElement);
@@ -888,6 +888,18 @@
          readFileAndParseXml(files[i], evt);  // store result to global variable MyXmlList
       }
    }
+   function ReplaceBeforeExport(myXmlObj){
+     var xmlDocObj = $.parseXML(myXmlObj);            // returns XMLDocument
+     var jqXml = $(xmlDocObj);
+     var xml = jqXml.find("ThdlPrototypeExport").get(0).outerHTML.replace(/<udefforcolor>/g,"")
+                                                                 .replace(/<\/udefforcolor>/g,"")
+                                                                 .replace(/locname/g,"LocName")
+                                                                 .replace(/personname/g,"PersonName")
+                                                                 .replace(/udef_/g,"Udef_")
+                                                                 .replace(/style="color: yellow;"/g,"");
+     return xml;
+
+   }
 
    $("#selectInFile").bind('change', function(evt) {
       resetXmlMetadataInfo();
@@ -917,7 +929,7 @@
 
       for (var xmlFilename in MyXmlList) {         // 目前應只有一個檔案
          var outXmlFilename = $("#outXmlFilename").val();
-         var out = '<?xml version="1.0"?>' + replaceXmlData(MyXmlList[xmlFilename]);
+         var out = '<?xml version="1.0"?>' + ReplaceBeforeExport(replaceXmlData(MyXmlList[xmlFilename]));
          var blob = new Blob([out], {type: "text/plain;charset=utf-8"});
          saveAs(blob, outXmlFilename);             // requires FileSaver.js
       }
