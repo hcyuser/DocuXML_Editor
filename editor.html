@@ -46,7 +46,7 @@
    <div id="headerBar" class="headerBar">
       <table class="headerBar" width="100%">
       <tr><td width="180" style="font-size:110%" align="left"><b>DocuSky</b><span style='font-size:60%;vertical-align:sub'>BETA</span></td>
-          <td><span style="font-size:105%">此工具可用來轉移 XML 建庫檔的 metadata 欄位，並且可設定欄位的顯示標題</td></td>
+          <td><span style="font-size:105%">此工具可用來編輯DocuXml</td></td>
           <td align="right"><a class="topAnchor" href="../../index.html">首頁</a> | <a class="topAnchor" href="../../userMainPage.php">我的資料庫</a></td>
       </tr>
       </table>
@@ -54,7 +54,7 @@
    <div class="contentArea">
       <table>
          <tr><td valign='top'><nobr>簡要說明：</nobr></td>
-             <td>此工具可讀入一份 ThdlExportXml 檔，讓使用者指定要將哪些 metadata 欄位的值複製到其他欄位，然後輸出另一份 ThdlExportXml 檔。</td>
+             <td>此工具可讀入一份 ThdlExportXml 檔，經過編輯後，輸出另一份 ThdlExportXml 檔。</td>
          </tr>
       </table>
       <br/>
@@ -72,6 +72,16 @@
             <td class="fileInfo" align="center">將左側欄位的值，複製到另一個欄位</td>
          </tr>
        </table>
+       <div class="contentArea">
+          <b>步驟1-1. 新增文獻集 metadata :</b>
+          <br>
+          欄位名稱:
+          <input type="text" id="NewMetaDataName"  size="20">
+          &nbsp;內文預設值:
+          <input type="text" id="NewMetaDataValue"  size="20" value="-">
+          &nbsp;<button onclick="AddMetaData()">新增</button>
+
+       </div>
        <div style="padding-top:10px">
           &#x25B6; 是否要更新 corpus 欄位內容，將所有的文件都放在單一文獻集之下？
           <input id="inputNewCorpus" type="checkbox" autocomplete="off">是</input>
@@ -110,7 +120,7 @@
        </div>
    </div>
    <div class="contentArea">
-      <b>步驟1-1. 新增 SpecificTerm :</b>
+      <b>步驟1-2. 新增 SpecificTag:</b>
       <br>
       編號：
       <input type="text" id="SpecificTermID"  size="20">
@@ -141,6 +151,10 @@
             <button onclick="SearchOutside(this.innerHTML)">TGAZ</button>
         </div>
       </div>
+      <br>
+      <button onclick="$('#ShowDocMetaData').toggle()">&#x25B6;</button>MetaData清單與內容
+      <div id="ShowDocMetaData"></div>
+      <button onclick="ModifyMetaData()">確認修改</button>
    </div>
 
    <div class="contentArea">
@@ -329,6 +343,7 @@
 
       $("#doc_"+currentDoc).html($.parseXML(afterreg).documentElement);
       $("#doc_"+currentDoc).show();
+      ShowMetaData();
 
 
    }
@@ -444,6 +459,89 @@
 
    }
 
+   function AddMetaData(){
+         for (var xmlFilename in MyXmlList) {
+           var docsInfo = MyXmlList[xmlFilename].docsInfo;
+           var jqXmlDoc = $.parseXML(MyXmlList[xmlFilename].text);
+           var jqUserXmlMetadata = $(jqXmlDoc).find("ThdlPrototypeExport > documents > document > xml_metadata");
+           var NewMetaDataName = $("#NewMetaDataName").val();
+           var NewMetaDataValue= $("#NewMetaDataValue").val();
+           jqUserXmlMetadata.each(function(){
+                  $(this).append(`<${NewMetaDataName}>${NewMetaDataValue}</${NewMetaDataName}>`);
+
+           });
+
+           MyXmlList[xmlFilename] = { text:  new XMLSerializer().serializeToString(jqXmlDoc) , docsInfo: docsInfo };
+
+            resetXmlMetadataInfo();                            // 計算後才能清除頁面資訊
+            parseXmlStr(MyXmlList[xmlFilename].text, xmlFilename);
+         }
+   }
+
+   function ShowMetaData(){
+
+     var tabledata='<table class="fileInfo" id="ShowDocMetaDataTable"><tr><th class="fileInfo">MetaData</th><th class="fileInfo">Value</th></tr>';
+     var doc = $("#doc_"+currentDoc).find("document > *");
+     doc.each(function(){
+         if(this.nodeName==="DOC_CONTENT" || this.nodeName==="XML_METADATA"){
+         }else{
+
+           tabledata = tabledata + `<tr class="fileInfo" align="center"><td class="fileInfo" >${this.nodeName}</td><td class="fileInfo"><input type="text" value="${this.textContent}" size="40"></input></td><tr>`;
+         }
+     });
+     var docinXML_METADATA = $("#doc_"+currentDoc).find("document > xml_metadata > *");
+     docinXML_METADATA.each(function(){
+         if(this.nodeName==="DOCMETADATA"){
+         }else{
+           tabledata = tabledata + `<tr class="fileInfo" align="center"><td class="fileInfo">${this.nodeName}</td><td class="fileInfo"><input type="text" value="${this.textContent}" size="40"></input></td><tr>`;
+         }
+     });
+     var docinDOCMETADATA = $("#doc_"+currentDoc).find("document > xml_metadata > docmetadata > *");
+       docinDOCMETADATA.each(function(){
+             tabledata = tabledata + `<tr class="fileInfo" align="center"><td class="fileInfo">${this.nodeName}</td><td class="fileInfo"><input type="text" value="${this.textContent}" size="40"></input></td><tr>`;
+       });
+
+     tabledata = tabledata +'</table>';
+      $("#ShowDocMetaData").html(tabledata);
+      $("#ShowDocMetaData").hide();
+
+   }
+
+   function ModifyMetaData(){
+
+
+          var currentRow=$("#ShowDocMetaDataTable").closest("tr");
+          var cellvalue = currentRow.find("td");
+          var temp = $("#doc_"+currentDoc).html();
+          $("#ShowDocMetaDataTable tr").each(function(iii){
+            if(iii%2==0){
+                return 0;
+            }
+            var currentRow=$(this);
+            var col1_value=currentRow.find("td:eq(0)").text().trim();
+            var col2_value=$(currentRow.find("td:eq(1)").find("input")).val();
+            col2_value = col2_value.trim().toLowerCase();
+            col1_value = col1_value.toLowerCase();
+            if(col1_value){
+               let goal = new RegExp('<'+col1_value+'.*?>.*?<\\/'+col1_value+'>','g');
+
+                 if(temp.match(goal)){
+
+                   let SplitPrefix = temp.match(goal)[0].split('>')[0];
+    
+                   temp = temp.replace(goal, `${SplitPrefix}>${col2_value}</${col1_value}>`);
+                 }
+
+
+
+            }
+
+          });
+
+          $("#doc_"+currentDoc).html(temp);
+          saveAndNextDoc();
+   }
+
    function SearchOutside(searchgoal){
         if(searchgoal=="CBDB"){
               window.open('https://cbdb.fas.harvard.edu/cbdbapi/person.php?name='+window.getSelection().toString());
@@ -489,6 +587,7 @@
           $("#doc_"+i).hide();
        }
         $("#doc_0").show();
+        ShowMetaData();
         var jqdc = $("#doc_0").find("doc_content").find("*");
         jqdc.each(function(index){
 
