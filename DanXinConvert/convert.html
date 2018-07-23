@@ -1,0 +1,163 @@
+<!doctype html>   <!-- note: code written with utf8, not ANSI, encoding -->
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+   <script src="../js/jquery.min.js"></script>
+   <script src="../js/FileSaver.min.js"></script>      <!-- 儲存檔案 -->
+   <style type="text/css">
+      body { margin: 0; font-family: Arial, Verdana, Microsoft JhengHei; line-height:150%; }
+      div.headerBar { background-color:brown; color:white; padding:8px; text-align: center; }
+      a.topAnchor:visited, a.topAnchor:link { color:#EFEFEF; cursor:pointer; }
+      div.contentArea { padding: 12px; }
+      div.outputArea { padding: 12px; }
+      table.fileInfo { width:100%; border-collapse: separate; border:2px solid gray; border-radius:3px; border-spacing: 2px; padding: 3px; }
+      tr.fileInfo:nth-child(even) { background: #EFEFEF; color:black; }
+      tr.fileInfo:nth-child(odd)  { background: #CFCFCF; color:black; }
+      tr.fileInfo:nth-child(1)    { background: #7F7F7F; color:white; }
+      td.fileInfo { padding: 3px;  vertical-align:top; }
+      span.fileDataItemTitle { margin-left:5px }
+      span.button { padding:6px; background-color:green; color:white;
+                    border-radius:4px; box-shadow: 3px 3px 2px #CFCFCF; cursor:pointer; }
+   </style>
+</head>
+<body>
+   <div id="headerBar" class="headerBar">
+      <table class="headerBar" width="100%">
+      <tr><td width="180" style="font-size:110%" align="left"><b>DocuSky</b><span style='font-size:60%;vertical-align:sub'>BETA</span></td>
+          <td><span style="font-size:105%">此工具可用來轉移 淡水新檔案Xml 的 metadata 和文本。</td></td>
+          <td align="right"><a class="topAnchor" href="../../index.html">首頁</a> | <a class="topAnchor" href="../../userMainPage.php">我的資料庫</a></td>
+      </tr>
+      </table>
+   </div>
+   <div class="contentArea">
+      <table>
+         <tr><td valign='top'><nobr>簡要說明：</nobr></td>
+             <td>此工具可合併淡水新檔案Xml和圖書館DARC檔，然後輸出另一份 ThdlExportXml 檔。</td>
+         </tr>
+      </table>
+      <br/>
+      <b>步驟1. 讀入 淡水新檔案Xml 檔案:</b>
+      <ul style="line-height:180%">
+      <li>選擇檔案：<input id="selectInFile" type="file" autocomplete="off" accept=".xml"/></li>
+      </ul>
+      <b>步驟2. 讀入 DARC Xml 檔案:</b>
+      <ul style="line-height:180%">
+      <li>選擇檔案：<input id="selectInFile2" type="file" autocomplete="off" accept=".xml"/></li>
+      </ul>
+    </div>
+
+      <div class="outputArea">
+        <b>步驟3. 輸出 ThdlExportXml 檔案:</b>
+        <ul style="line-height:180%">
+        <li>欲儲存的建庫檔名：<input type="text" id="outXmlFilename" value="NewExportFilename.xml" size="45" autocomplete="off"></input>
+            <button id="saveThdlExportXmlToFile">點我儲存</button></li>
+        </ul>
+      </div>
+
+</body>
+<script type="text/javascript">
+   var docuSkyObj = null;
+   var MyXmlList = {};
+   var MyXmlListDARC = {};
+   var GoalXml = {};
+   var goalTemplate =
+   `<?xml version="1.0"?><ThdlPrototypeExport>
+   <corpus name="*">
+   <feature_analysis>
+   </feature_analysis>
+   <metadata_field_settings>
+
+   </metadata_field_settings>
+   </corpus>
+   <documents>
+          FORREPLACE
+   </documents>
+   </ThdlPrototypeExport>`;
+
+
+   function processXmlStr() {
+     
+       alert(goalTemplate );
+
+   }
+
+
+
+   function readFileAndParseXml(file, evt) {
+      var xmlFilename = file.name;
+      var fr = new FileReader();
+      fr.addEventListener('load', function(evt) {
+         if (typeof MyXmlList[xmlFilename] !== "undefined") {
+            alert("File '" + xmlFilename + "' has been loaded");
+            return;
+         }
+         var s = evt.target.result;
+         MyXmlList[xmlFilename] = s;
+             // 2017-05-15
+      });
+      fr.readAsText(file, 'utf-8');
+   }
+
+   function readFileAndParseXmlDARC(file, evt) {
+      var xmlFilename = file.name;
+      var fr = new FileReader();
+      fr.addEventListener('load', function(evt) {
+         if (typeof MyXmlListDARC[xmlFilename] !== "undefined") {
+            alert("File '" + xmlFilename + "' has been loaded");
+            return;
+         }
+         var s = evt.target.result;
+         MyXmlListDARC[xmlFilename] = s;
+              // 2017-05-15
+      });
+      fr.readAsText(file, 'utf-8');
+   }
+
+
+   function handleSelectInFile(evt) {
+      //var outXmlFilename = $("#outXmlFilename").val().replace(/^(.+)\.xml$/, "$1" + ".xml");
+      //$("#outXmlFilename").val(outXmlFilename)
+
+      // 先簡單剖析檔案中有哪些資料（輸出時，需再剖析一次，取出欲輸出的資訊）
+      var files = evt.target.files;           // FileList object
+      for (var i=0; i<files.length; i++) {    // read selected files
+         var inFilename = files[i].name;
+         var outXmlFilename = inFilename.replace(/^(.+)\.xml$/, "M-" + "$1" + ".xml");
+         $("#outXmlFilename").val(outXmlFilename)
+         readFileAndParseXml(files[i], evt);  // store result to global variable MyXmlList
+      }
+   }
+   function handleSelectInFileDARC(evt) {
+
+      var files = evt.target.files;
+      for (var i=0; i<files.length; i++) {
+         var inFilename = files[i].name;
+         var outXmlFilename = inFilename.replace(/^(.+)\.xml$/, "M-" + "$1" + ".xml");
+         readFileAndParseXmlDARC(files[i], evt);  // store result to global variable MyXmlList
+      }
+   }
+
+   $("#selectInFile").bind('change', function(evt) {
+      //resetXmlMetadataInfo();
+      handleSelectInFile(evt);
+   });
+
+   $("#selectInFile2").bind('change', function(evt) {
+      //resetXmlMetadataInfo();
+      handleSelectInFileDARC(evt);
+   });
+
+
+   $("#saveThdlExportXmlToFile").click(function() {
+      processXmlStr();
+      for (var goal in  GoalXml) {         // 目前應只有一個檔案
+         //alert(GoalXml[goal]);
+         var out = '<?xml version="1.0"?>' + GoalXml[goal];
+         var blob = new Blob([out], {type: "text/plain;charset=utf-8"});
+         saveAs(blob, goal);             // requires FileSaver.js
+      }
+
+   });
+
+</script>
+</html>

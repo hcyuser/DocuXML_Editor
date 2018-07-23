@@ -4,6 +4,10 @@
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
    <script src="./js/jquery.min.js"></script>
    <script src="./js/FileSaver.min.js"></script>      <!-- 儲存檔案 -->
+   <script src="http://docusky.digital.ntu.edu.tw/docusky/js/jquery.min.js"></script>
+   <script src="http://docusky.digital.ntu.edu.tw/docusky/js/jquery-ui.min.js"></script>
+   <link href="http://docusky.digital.ntu.edu.tw/docusky/css/jquery-ui.min.css" rel="stylesheet"></link>
+   <script src="http://docusky.digital.ntu.edu.tw/docusky/js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
    <style type="text/css">
       body { margin: 0; font-family: Arial, Verdana, Microsoft JhengHei; line-height:150%; }
       div.headerBar { background-color:brown; color:white; padding:8px; text-align: center; }
@@ -182,6 +186,12 @@
           <button id="saveThdlExportXmlToFile">點我儲存</button></li>
       </ul>
    </div>
+   <div class="outputArea">
+      <b>步驟4. 上載單份 ThdlExportXml 檔以建構文字資料庫:</b>
+      <div id="HeaderBar">
+         <span id="manageDbList" style="padding:3px; border:blue 2px solid; background:blue; color:white; border-radius:3px; cursor:pointer">管理文獻集</span>
+      </div>
+   </div>
    <br/>
 </body>
 <script type="text/javascript">
@@ -266,6 +276,12 @@
       });
 
       $("#2-1AdvanceTagging").hide();
+      //docuSky upload API
+      docuSkyObj = docuskyManageDbListSimpleUI;
+      $("#manageDbList").click(function(e) {
+         docuSkyObj.manageDbList(e);
+      });
+
    });
 
    function resetXmlMetadataInfo() {
@@ -528,7 +544,7 @@
                  if(temp.match(goal)){
 
                    let SplitPrefix = temp.match(goal)[0].split('>')[0];
-    
+
                    temp = temp.replace(goal, `${SplitPrefix}>${col2_value}</${col1_value}>`);
                  }
 
@@ -1033,6 +1049,8 @@
          saveAs(blob, outXmlFilename);             // requires FileSaver.js
       }
    });
+
+  
 
 </script>
 </html>
