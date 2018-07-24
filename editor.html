@@ -539,35 +539,29 @@
    function ModifyMetaData(){
 
 
-          var currentRow=$("#ShowDocMetaDataTable").closest("tr");
-          var cellvalue = currentRow.find("td");
-          var temp = $("#doc_"+currentDoc).html();
+          //var currentRow=$("#ShowDocMetaDataTable").closest("tr");
+          //var cellvalue = currentRow.find("td");
+          var temp = $("#doc_"+currentDoc);
           $("#ShowDocMetaDataTable tr").each(function(iii){
             if(iii%2==0){
                 return 0;
             }
             var currentRow=$(this);
             var col1_value=currentRow.find("td:eq(0)").text().trim();
+            //console.log(col1_value);
+            if(col1_value=="doc_content" || col1_value=="xml_metadata"){
+                  return 0;
+
+            }
             var col2_value=$(currentRow.find("td:eq(1)").find("input")).val();
             col2_value = col2_value.trim().toLowerCase();
             col1_value = col1_value.toLowerCase();
             if(col1_value){
-               let goal = new RegExp('<'+col1_value+'.*?>.*?<\\/'+col1_value+'>','g');
-
-                 if(temp.match(goal)){
-
-                   let SplitPrefix = temp.match(goal)[0].split('>')[0];
-
-                   temp = temp.replace(goal, `${SplitPrefix}>${col2_value}</${col1_value}>`);
-                 }
-
-
-
+                temp.find(col1_value).text(col2_value);
             }
 
           });
 
-          $("#doc_"+currentDoc).html(temp);
           saveAndNextDoc();
    }
 

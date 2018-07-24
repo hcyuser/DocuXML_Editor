@@ -66,7 +66,6 @@
    <feature_analysis>
    </feature_analysis>
    <metadata_field_settings>
-
    </metadata_field_settings>
    </corpus>
    <documents>
@@ -76,8 +75,95 @@
 
 
    function processXmlStr() {
-     
-       alert(goalTemplate );
+
+     for (var goal in  MyXmlList) {         // 目前應只有一個檔案
+          for( var goal2 in MyXmlListDARC){
+              var s = MyXmlListDARC[goal2];
+              var docs = $($.parseXML(s)).find("document");
+              var filename = docs.find(`field[name="檔案名稱"]`).text().trim();
+              var title = docs.find(`field[name="主要題名"]`).text().trim();
+              var corpus = docs.find(`field[name="來源"]`).text().trim();
+              var book_code = docs.find(`field[name="全集/系列名稱"]`).text().trim();
+              var author = docs.find(`field[name="主要作者/發文者及職稱/身分"]`).text().trim();
+              var doctype_aux = docs.find(`field[name="文書形式類別"]`).text().trim();
+              var doc_category_l1 = docs.find(`field[name="內容主題"]`).text().trim();
+              var doc_category_l2 = docs.find(`field[name="內容主題"]`).text().trim();
+              var doc_category_l3 = docs.find(`field[name="關鍵字1"]`).text().trim();
+              var col_level = docs.find(`field[name="藏品層次"]`).text().trim();
+              var docclass = docs.find(`field[name="作品類型"]`).text().trim();
+              var docclass_aux = docs.find(`field[name="作品類型"]`).text().trim();
+              var doctype = docs.find(`field[name="媒體類型"]`).text().trim();
+              var quantity = docs.find(`field[name="數量單位"]`).text().trim();
+              var size = docs.find(`field[name="尺寸大小"]`).text().trim();
+              var color = docs.find(`field[name="色彩"]`).text().trim();
+              var binding = docs.find(`field[name="裝訂"]`).text().trim();
+              var abstract = docs.find(`field[name="內容摘要"]`).text().trim();
+              var relationship = docs.find(`field[name="主要關係人及職稱/身分"]`).text().trim();
+              var time_dynasty = docs.find(`field[name="朝代"]`).text().trim();
+              var geo = docs.find(`field[name="內容地點"]`).text().trim();
+              var time_norm_year = docs.find(`field[name="成文日期"]`).text().trim();
+              var year_for_grouping = docs.find(`field[name="成文日期"]`).text().trim();
+              var country = docs.find(`field[name="典藏單位國家"]`).text().trim();
+              var depository = docs.find(`field[name="典藏單位"]`).text().trim();
+              var copyright = docs.find(`field[name="著作財產權人"]`).text().trim();
+              var name_note = docs.find(`field[name="人名註解"]`).text().trim();
+              var seal = docs.find(`field[name="印記種類-"]`).text().trim();
+              var note = docs.find(`field[name="備註"]`).text().trim();
+              var extractcorpus = $.parseXML(MyXmlList[goal]);
+              var temp = $(extractcorpus).find("document > Content > div");
+              var MetaDataStr = `filename
+title
+corpus
+book_code
+author
+doctype_aux
+doc_category_l1
+doc_category_l2
+doc_category_l3
+col_level
+docclass
+docclass_aux
+doctype
+quantity
+size
+color
+binding
+abstract
+relationship
+time_dynasty
+geo
+time_norm_year
+year_for_grouping
+country
+depository
+copyright
+name_note
+seal
+note`;
+              var DocTag="";
+              temp.find("section").each(function(iii){
+                    var currentCorpus='<doc_content>'+$(this).html()+'</doc_content>';
+                    var corpusid = $(this).attr("id");
+
+                    var XmlMetaData  = $("<xml_metadata>");
+                    MetaDataStr.split("\n").forEach(function(item,index){
+                      item  = item.trim();
+                      XmlMetaData.append(`<${item}>${eval(item).trim()}</${item}>`);
+                    });
+
+                    DocTag = DocTag + $("<document>").attr("filename",corpusid)
+                                                    .append(currentCorpus,XmlMetaData)[0].outerHTML;
+
+
+
+
+              });
+
+              GoalXml[goal] = goalTemplate.replace("FORREPLACE",DocTag).replace(/<br>/g,"");
+
+
+          }
+     }
 
    }
 
@@ -152,7 +238,7 @@
       processXmlStr();
       for (var goal in  GoalXml) {         // 目前應只有一個檔案
          //alert(GoalXml[goal]);
-         var out = '<?xml version="1.0"?>' + GoalXml[goal];
+         var out =  GoalXml[goal];
          var blob = new Blob([out], {type: "text/plain;charset=utf-8"});
          saveAs(blob, goal);             // requires FileSaver.js
       }
