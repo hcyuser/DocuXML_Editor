@@ -422,10 +422,23 @@
              var NewID = $("#SpecificTermID").val();
              var NewTag = $("#SpecificTermTag").val();
              var NewTitle = $("#SpecificTermTitle").val();
-             var  temp= FA.html()+ '<spotlight category="'+NewTag+'" sub_category="-" '+' display_order="'+NewID+'" title="'+NewTitle+'" />';
-             temp = temp + '<tag type="contentTagging" name="'+NewTag+'" default_category="'+NewTag+'" default_sub_category="-"/>';
-            // alert(temp);
-             TP.find("feature_analysis").html(temp);
+
+             if(FA.length > 0){
+               var  temp= FA.html()+ '<spotlight category="'+NewTag+'" sub_category="-" '+' display_order="'+NewID+'" title="'+NewTitle+'" />';
+               temp = temp + '<tag type="contentTagging" name="'+NewTag+'" default_category="'+NewTag+'" default_sub_category="-"/>';
+
+               TP.find("feature_analysis").html(temp);
+
+             }else{
+               var Thdl = $(jqXmlDoc).find("ThdlPrototypeExport");
+               var  temp= '<corpus name="*"><feature_analysis><spotlight category="'+NewTag+'" sub_category="-" '+' display_order="'+NewID+'" title="'+NewTitle+'" />'+
+                          '<tag type="contentTagging" name="'+NewTag+'" default_category="'+NewTag+'" default_sub_category="-"/></feature_analysis></corpus>'+Thdl.html();
+
+               Thdl.html(temp);
+
+
+             }
+
              //console.log(MyXmlList[xmlFilename]);
 
              //$(jqXmlDoc).find("ThdlPrototypeExport > documents > document").text(temp.html());
