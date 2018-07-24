@@ -77,7 +77,7 @@
          </tr>
        </table>
        <div class="contentArea">
-          <b>步驟1-1. 新增文獻集 metadata :</b>
+          <b>步驟1-1. 新增文獻集 metadata欄位 :</b>
           <br>
           欄位名稱:
           <input type="text" id="NewMetaDataName"  size="20">
@@ -156,7 +156,7 @@
         </div>
       </div>
       <br>
-      <button onclick="$('#ShowDocMetaData').toggle()">&#x25B6;</button>MetaData清單與內容
+      <button onclick="$('#ShowDocMetaData').toggle()">&#x25B6;</button>MetaData欄位清單與內容
       <div id="ShowDocMetaData"></div>
       <button onclick="ModifyMetaData()">確認修改</button>
    </div>
@@ -496,7 +496,7 @@
 
    function ShowMetaData(){
 
-     var tabledata='<table class="fileInfo" id="ShowDocMetaDataTable"><tr><th class="fileInfo">MetaData</th><th class="fileInfo">Value</th></tr>';
+     var tabledata='<table class="fileInfo" id="ShowDocMetaDataTable"><tr><th class="fileInfo">MetaData欄位</th><th class="fileInfo">Value</th></tr>';
      var doc = $("#doc_"+currentDoc).find("document > *");
      doc.each(function(){
          if(this.nodeName==="DOC_CONTENT" || this.nodeName==="XML_METADATA"){
@@ -1011,7 +1011,10 @@
                                                                  .replace(/locname/g,"LocName")
                                                                  .replace(/personname/g,"PersonName")
                                                                  .replace(/udef_/g,"Udef_")
-                                                                 .replace(/style="color: yellow;"/g,"");
+                                                                 .replace(/style=\"color: yellow;\"/g,"")
+                                                                 .replace(/style=\"color: rgb(255, 255, 0);\"/g,"");
+
+
      return xml;
 
    }
@@ -1050,7 +1053,7 @@
       }
    });
 
-  
+
 
 </script>
 </html>
