@@ -159,6 +159,7 @@
       <button onclick="$('#ShowDocMetaData').toggle()">&#x25B6;</button>MetaData欄位清單與內容
       <div id="ShowDocMetaData"></div>
       <button onclick="ModifyMetaData()">確認修改</button>
+      <div id="DanXinPic"></div>
    </div>
 
    <div class="contentArea">
@@ -534,8 +535,32 @@
       $("#ShowDocMetaData").html(tabledata);
       $("#ShowDocMetaData").hide();
 
-   }
+      ShowDanXinPic();
 
+   }
+   function ShowDanXinPic(){
+     $("#ShowDocMetaDataTable tr").each(function(iii){
+       if(iii%2==0){
+           return 0;
+       }
+       var currentRow=$(this);
+       var col1_value=currentRow.find("td:eq(0)").text().trim();
+
+       if(col1_value=="filename" || col1_value=="FILENAME"){
+         let col2_value=$(currentRow.find("td:eq(1)").find("input")).val();
+                let outputlink = `<a href="http://thdl.ntu.edu.tw/THDL/RetrieveImageForDocusky.php?image_group=DanXinFiles-jpg&image_fname=${col2_value}.jpg"
+                                  target="_blank">
+                                        淡新圖檔
+                                  </a>`;
+                $("#DanXinPic").html(outputlink);
+
+       }
+
+
+     });
+
+
+   }
    function ModifyMetaData(){
 
 

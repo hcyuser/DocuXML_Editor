@@ -1,16 +1,9 @@
 <?xml version="1.0"?><ThdlPrototypeExport>
-<corpus name="*">
-<feature_analysis>
-</feature_analysis>
-<metadata_field_settings>
-
-</metadata_field_settings>
-</corpus>
 <documents>
-<document filename="ZaiYiQuanWenfullnew.txt_markus (5)_p0001">
-
+<document filename="ZaiYiQ.xml">
+<corpus>古契書</corpus>
 <doc_content>
-  4444
+  我最愛測試了
 </doc_content>
 <xml_metadata>
      <time_norm_year>3年</time_norm_year>
@@ -21,10 +14,10 @@
      <geo>漢中</geo>
 </xml_metadata>
 </document>
-<document filename="ZaiYiQuanWenfullnew.txt_markus (5)_p0001">
-
+<document filename="ZaiYiQuanWenfullnew.txt_ma.xml">
+<corpus>古契書</corpus>
 <doc_content>
-  123123
+  測試測試好棒棒
 </doc_content>
 <xml_metadata>
      <time_norm_year>3年</time_norm_year>
