@@ -135,7 +135,12 @@
 
    </div>
    <div class="contentArea">
-      <b>步驟2. 修改 ThdlExportXml 內容:</b>
+      <b>步驟2. 修改 全文內容:</b>
+      <div id="DocContext"><textarea  rows="6" cols="100">如果你看到這一欄位，表示你尚未讀取XML。</textarea></div>
+      <button onclick="ModifyDocContent()">確認修改</button>
+   </div>
+   <div class="contentArea">
+      <b>步驟2-1. 修改 ThdlExportXml Tag內容:</b>
       <div id="eachdocument" onmouseup="TagPopup()">如果你看到這一欄位，表示你尚未讀取XML。</div>
       <button id="DocPre" onclick="PreDoc()" class="button">上一個</button>
       <button id="DocSaveANDNext" onclick="saveAndNextDoc()"  class="button">點我儲存&下一個</button>
@@ -155,16 +160,15 @@
         </div>
       </div>
       <br>
-      <button onclick="$('#ShowDocMetaData').toggle()">&#x25B6;</button> 全文編輯 / MetaData欄位清單與內容
-      <div id="DocContext"><textarea  rows="6" cols="100">如果你看到這一欄位，表示你尚未讀取XML。</textarea></div>
+      <button onclick="$('#ShowDocMetaData').toggle()">&#x25B6;</button> MetaData欄位清單與內容
       <div id="ShowDocMetaData"></div>
       <button onclick="ModifyMetaData()">確認修改</button>
       <div id="DanXinPic"></div>
    </div>
 
    <div class="contentArea">
-      <button onclick="$('#2-1AdvanceTagging').toggle()">&#x25B6;</button>步驟2-1. 搜尋與一鍵標記</b>
-      <div id="2-1AdvanceTagging">
+      <button onclick="$('#2-2AdvanceTagging').toggle()">&#x25B6;</button>步驟2-2. 搜尋與一鍵標記</b>
+      <div id="2-2AdvanceTagging">
         <br>
         Term：
         <input type="text" id="AdvanceTagTerm"  size="20">
@@ -276,7 +280,7 @@
          }
       });
 
-      $("#2-1AdvanceTagging").hide();
+      $("#2-2AdvanceTagging").hide();
       //docuSky upload API
       docuSkyObj = docuskyManageDbListSimpleUI;
       $("#manageDbList").click(function(e) {
@@ -601,7 +605,6 @@
             }
 
           });
-          ModifyDocContent();
           saveAndNextDoc();
    }
 
