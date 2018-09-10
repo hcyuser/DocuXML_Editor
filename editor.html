@@ -174,7 +174,7 @@
         <input type="text" id="AdvanceTagTerm"  size="20">
         &nbsp;標籤: <i>請輸入LocName or PersonName or Udef_XXX</i>
         <input type="text" id="AdvanceTag"  size="20">
-        &nbsp;  RefId:
+        &nbsp;  RefId CBDB hvd_ :
         <input type="text" id="AdvanceTagRefId"  size="20">
         &nbsp;<button onclick="AddAdvanceTag()">新增</button>
       </div>
@@ -400,7 +400,7 @@
             if(tagname.toUpperCase().startsWith("UDEF_")){
               newObj = $.parseXML(`<${tagname}><udefforcolor>${s.textContent}</udefforcolor></${tagname}>`);
             }else{
-              let userinput = prompt("Please input RefId: ");
+              let userinput = prompt("Please input RefId: CBDB hvd_ ");
               if(userinput){
                   newObj = $.parseXML(`<${tagname} RefId="${userinput}" Term="${userinput}" >${s.textContent}</${tagname}> `);
 
